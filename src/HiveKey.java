@@ -4,7 +4,10 @@ public class HiveKey {
     private byte[] actual_seed; //SecureRandom.generateSeed(64 bits)
     private int key; //SecureRandom.next(128 bits);
     private ArrayList<ArrayList<byte[]>> parent_seeds; //SecureRandom.generateSeed(64 bits)
-    private int ver;
+    private HKTimestamp timestamp;
+    private byte[] left_seed;
+    private byte[] right_seed;
+    private byte[] child_seed;
 
     /**
      * Generates a random seed used to randomize the 6 parent seeds for HiveKey
@@ -19,11 +22,11 @@ public class HiveKey {
      * Randomly choose a parent seed based on the current system time and sets the version code
      * @return the chosen parent seed
      */
-    private byte[] disturb() {
-        //System.currentTimeMillis()
-        //set ver = nine LSB of timestamp
+    private void disturb() {
+        //determine parent seed from timestamp
+        //get/set left and right neighbor seeds
         //generate children based on ver code
-        //determine child number
+        //determine/set child_seed
     }
 
     /**
@@ -31,8 +34,9 @@ public class HiveKey {
      * the left and right neighbors
      */
     private void computeActualSeed() {
-        //consider two neighbors of chosen seed from disturb()
-        //set actual_seed
+        //60% MSB of left_seed (eq. 4a)
+        //40% LSB of right_seed (eq. 4b)
+        //compute/store actual_seed (eq. 5)
     }
 
     /**
@@ -48,7 +52,9 @@ public class HiveKey {
      * @param args command line arguments, if any
      */
     public static void main(String[] args) {
-        //generate 10240 key sequences with random delays
+        //get/set timestamp - SYstem.currentTimeMillis()
+        //generate 10240 key sequence - output to file
+        //delay - random from 0-2 seconds, between each key sequence generated
         //sequence evaluation
     }
 }
