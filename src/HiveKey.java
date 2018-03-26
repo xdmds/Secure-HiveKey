@@ -7,8 +7,8 @@ public class HiveKey {
     private int key; //SecureRandom.next(128 bits);
     private static ArrayList<byte[]> parent_seeds;
     private HKTimestamp timestamp;
-    private byte[] left_seed;
-    private byte[] right_seed;
+    private static byte[] left_seed;
+    private static byte[] right_seed;
     private byte[] child_seed;
 
     /**
@@ -31,19 +31,31 @@ public class HiveKey {
     }
 
     /**
+     * TODO: THIS FUNCTION
      * Randomly choose a parent seed based on the current system time and sets the version code
      * @return the chosen parent seed
      */
     private static void disturb() {
         //get parent seed from timestamp
-        String parent_seed = this.timestamp.getParentIDBits();
-
+        String p_id = this.timestamp.getParentIDBits();
+        int p_index = (Integer.parseInt(p_id, 2) % 6);
+        byte[] p = parent_seeds.get(p_index);
+        
         //get/set left and right neighbor seeds
+
         //generate children based on ver code
+        int num_children = 6;
+        if(this.timestamp.getVer() == 1) {
+            num_children = 18;
+        }
+        ArrayList<byte[]> child_seeds = new ArrayList<byte[]>(num_children);
+        
+
         //determine/set child_seed
     }
 
     /**
+     * TODO: THIS FUNCTION
      * Generates the seed used for the actual key generation, done by disturbing the hive and integrating
      * the left and right neighbors
      */
@@ -54,6 +66,7 @@ public class HiveKey {
     }
 
     /**
+     * TODO: THIS FUNCTION
      * Generates the encryption key from the actual seed
      */
     private static void generateKey() {
@@ -61,6 +74,7 @@ public class HiveKey {
     }
 
     /**
+     * FIXME: COMPLETE THIS FUNCTION
      * Creates a encryption key sequences with random delays. These keys are then evaluated
      * with ISS and STS and compared to the results of HiveSec's implementation using Random()
      * @param args command line arguments, if any
@@ -71,7 +85,9 @@ public class HiveKey {
         this.timestamp = new HKTimestamp(ts);
 
         //init parent_seeds array
-        parent_seeds = new ArrayList<byte[]>(6);
+        this.parent_seeds = new ArrayList<byte[]>(6);
+        this.left_seed = new byte[64];
+        this.right_seed = new byte[64];
 
         generateParents();
         disturb();
