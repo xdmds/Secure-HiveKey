@@ -53,6 +53,14 @@ public class HiveKey {
      * @param args command line arguments, if any
      */
     public static void main(String[] args) {
+        timestampTesting();
+        //get/set timestamp - SYstem.currentTimeMillis()
+        //generate 10240 key sequence - output to file
+        //delay - random from 0-2 seconds, between each key sequence generated
+        //sequence evaluation
+    }
+
+    private static void timestampTesting() {
         long timestamp = System.currentTimeMillis();
         HKTimestamp hkt = new HKTimestamp(timestamp);
 
@@ -61,9 +69,5 @@ public class HiveKey {
         System.out.println("Version: " + hkt.getVer());
         System.out.println("Parent ID: " + hkt.getParentIDBits());
         System.out.println("Child ID: " + hkt.getChildIDBits());
-        //get/set timestamp - SYstem.currentTimeMillis()
-        //generate 10240 key sequence - output to file
-        //delay - random from 0-2 seconds, between each key sequence generated
-        //sequence evaluation
     }
 }
