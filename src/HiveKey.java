@@ -3,13 +3,13 @@ import java.util.Arrays;
 import java.security.SecureRandom;
 
 public class HiveKey {
-    private byte[] actual_seed; //SecureRandom.generateSeed(64 bits)
-    private int key; //SecureRandom.next(128 bits);
+    private static byte[] actual_seed; //SecureRandom.generateSeed(64 bits)
+    private static int key; //SecureRandom.next(128 bits);
     private static ArrayList<byte[]> parent_seeds;
-    private HKTimestamp timestamp;
+    private static HKTimestamp timestamp;
     private static byte[] left_seed;
     private static byte[] right_seed;
-    private byte[] child_seed;
+    private static byte[] child_seed;
 
     /**
      * Generates a random seed used to randomize the 6 parent seeds for HiveKey
@@ -31,27 +31,49 @@ public class HiveKey {
     }
 
     /**
-     * TODO: THIS FUNCTION
-     * Randomly choose a parent seed based on the current system time and sets the version code
+     * Randomly choose a parent seed and set the left/right neighbor seeds
      * @return the chosen parent seed
      */
-    private static void disturb() {
+    private static byte[] disturb() {
         //get parent seed from timestamp
-        String p_id = this.timestamp.getParentIDBits();
+        String p_id = timestamp.getParentIDBits();
         int p_index = (Integer.parseInt(p_id, 2) % 6);
         byte[] p = parent_seeds.get(p_index);
         
         //get/set left and right neighbor seeds
+        left_seed = parent_seeds.get((p_index - 1) % 6);
+        right_seed = parent_seeds.get((p_index + 1) % 6);
 
-        //generate children based on ver code
+        return p;
+    }
+
+    /**
+     * Generate the child seed
+     */
+    private static void generateChild(byte[] p) {
+        //generate a random number using parent_seed as seed
+        SecureRandom random = new SecureRandom();
+        random.setSeed(p);
+
+        //get child id from timestamp and num children
+        String c_id = timestamp.getChildIDBits();
         int num_children = 6;
-        if(this.timestamp.getVer() == 1) {
+        if(timestamp.getVer() == 1) {
             num_children = 18;
         }
-        ArrayList<byte[]> child_seeds = new ArrayList<byte[]>(num_children);
-        
 
-        //determine/set child_seed
+        //calculate index
+        int c_index = (Integer.parseInt(c_id, 2) % num_children);
+        ArrayList<byte[]> child_seeds = new ArrayList<byte[]>(num_children);
+        for(int i = 0; i < num_children; i++) {
+            byte[] next_seed = new byte[64];
+            random.nextBytes(next_seed);
+
+            //add to child_seeds array
+            child_seeds.add(next_seed);
+        }        
+
+        child_seed = child_seeds.get(c_index);
     }
 
     /**
@@ -82,15 +104,16 @@ public class HiveKey {
     public static void main(String[] args) {
         //timestampTesting();
         long ts = System.currentTimeMillis();
-        this.timestamp = new HKTimestamp(ts);
+        timestamp = new HKTimestamp(ts);
 
         //init parent_seeds array
-        this.parent_seeds = new ArrayList<byte[]>(6);
-        this.left_seed = new byte[64];
-        this.right_seed = new byte[64];
+        parent_seeds = new ArrayList<byte[]>(6);
+        left_seed = new byte[64];
+        right_seed = new byte[64];
 
         generateParents();
-        disturb();
+        byte[] p = disturb();
+        generateChild(p);
  
         //generate 10240 key sequence - output to file
         //delay - random from 0-2 seconds, between each key sequence generated
