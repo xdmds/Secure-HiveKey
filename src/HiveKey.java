@@ -102,9 +102,9 @@ public class HiveKey {
      * @param args command line arguments, if any
      */
     public static void main(String[] args) {
-        //timestampTesting();
         long ts = System.currentTimeMillis();
         timestamp = new HKTimestamp(ts);
+        //timestampInfo();
 
         //init parent_seeds array
         parent_seeds = new ArrayList<byte[]>(6);
@@ -120,14 +120,11 @@ public class HiveKey {
         //sequence evaluation
     }
 
-    private static void timestampTesting() {
-        long timestamp = System.currentTimeMillis();
-        HKTimestamp hkt = new HKTimestamp(timestamp);
-
-        System.out.println("Timestamp: " + hkt.getTimestamp());
-        System.out.println("Timestamp bits: " + hkt.getTimestampBits());
-        System.out.println("Version: " + hkt.getVer());
-        System.out.println("Parent ID: " + hkt.getParentIDBits());
-        System.out.println("Child ID: " + hkt.getChildIDBits());
+    private static void timestampInfo() {
+        System.out.println("Timestamp: " + timestamp.getTimestamp());
+        System.out.println("Timestamp bits: " + timestamp.getTimestampBits());
+        System.out.println("Version: " + timestamp.getVer());
+        System.out.println("Parent ID: " + timestamp.getParentIDBits());
+        System.out.println("Child ID: " + timestamp.getChildIDBits());
     }
 }
