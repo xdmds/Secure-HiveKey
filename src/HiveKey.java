@@ -42,8 +42,9 @@ public class HiveKey {
         int p_index = (Integer.parseInt(p_id, 2) % 6);
         byte[] p = parent_seeds.get(p_index);
         
-        //get/set left and right neighbor seeds
-        left_seed = parent_seeds.get((p_index - 1) % 6);
+        //get/set left and right neighbor seedsp
+        int left_index = (p_index + 5) % 6;
+        left_seed = parent_seeds.get(left_index);
         right_seed = parent_seeds.get((p_index + 1) % 6);
 
         return p;
