@@ -3,21 +3,30 @@ import java.util.Arrays;
 import java.security.SecureRandom;
 
 public class HiveKey {
-    private static long actual_seed; //SecureRandom.generateSeed(64 bits)
-    private static byte[] key; //SecureRandom.next(128 bits);
-    private static ArrayList<byte[]> parent_seeds;
-    private static HKTimestamp timestamp;
-    private static byte[] left_seed;
-    private static long left_seed_prime;
-    private static long right_seed_prime;
-    private static byte[] right_seed;
-    private static byte[] child_seed;
+    private long actual_seed; //SecureRandom.generateSeed(64 bits)
+    private byte[] key; //SecureRandom.next(128 bits);
+    private ArrayList<byte[]> parent_seeds;
+    private HKTimestamp timestamp;
+    private byte[] left_seed;
+    private long left_seed_prime;
+    private long right_seed_prime;
+    private byte[] right_seed;
+    private byte[] child_seed;
     private final static char[] hexArray = "0123456789ABCDEF".toCharArray();
+
+    public HiveKey() {
+        long ts = System.currentTimeMillis();
+        this.timestamp = new HKTimestamp(ts);
+        this.parent_seeds = new ArrayList<byte[]>(6);
+        this.left_seed = new byte[8];
+        this.right_seed = new byte[8];
+        this.key = new byte[8];
+    }
 
     /**
      * Generates a random seed used to randomize the 6 parent seeds for HiveKey
      */
-    private static void generateParents() {
+    private void generateParents() {
         //generate a random seed
         SecureRandom random = new SecureRandom();
         byte[] init_seed = random.generateSeed(8);
@@ -29,7 +38,7 @@ public class HiveKey {
             random.nextBytes(next_seed);
 
             //add to parent_seed array
-            parent_seeds.add(next_seed);
+            this.parent_seeds.add(next_seed);
         }
     }
 
@@ -37,16 +46,16 @@ public class HiveKey {
      * Randomly choose a parent seed and set the left/right neighbor seeds
      * @return the chosen parent seed
      */
-    private static byte[] disturb() {
+    private byte[] disturb() {
         //get parent seed from timestamp
-        String p_id = timestamp.getParentIDBits();
+        String p_id = this.timestamp.getParentIDBits();
         int p_index = (Integer.parseInt(p_id, 2) % 6);
-        byte[] p = parent_seeds.get(p_index);
+        byte[] p = this.parent_seeds.get(p_index);
         
         //get/set left and right neighbor seedsp
         int left_index = (p_index + 5) % 6;
-        left_seed = parent_seeds.get(left_index);
-        right_seed = parent_seeds.get((p_index + 1) % 6);
+        this.left_seed = this.parent_seeds.get(left_index);
+        this.right_seed = this.parent_seeds.get((p_index + 1) % 6);
 
         return p;
     }
@@ -54,15 +63,15 @@ public class HiveKey {
     /**
      * Generate the child seed
      */
-    private static void generateChild(byte[] p) {
+    private void generateChild(byte[] p) {
         //generate a random number using parent_seed as seed
         SecureRandom random = new SecureRandom();
         random.setSeed(p);
 
         //get child id from timestamp and num children
-        String c_id = timestamp.getChildIDBits();
+        String c_id = this.timestamp.getChildIDBits();
         int num_children = 6;
-        if(timestamp.getVer() == 1) {
+        if(this.timestamp.getVer() == 1) {
             num_children = 18;
         }
 
@@ -77,7 +86,7 @@ public class HiveKey {
             child_seeds.add(next_seed);
         }        
 
-        child_seed = child_seeds.get(c_index);
+        this.child_seed = child_seeds.get(c_index);
     }
 
     /**
@@ -85,29 +94,29 @@ public class HiveKey {
      * Generates the seed used for the actual key generation, done by disturbing the hive and integrating
      * the left and right neighbors
      */
-    private static void computeActualSeed() {
+    private void computeActualSeed() {
         //60% MSB of left_seed (eq. 4a)
-        left_seed_prime = ByteUtils.bytesToLong(left_seed) & 0xfffffffffc000000L; //most significant 38 bits are 1. 60% is 38.4
+        this.left_seed_prime = ByteUtils.bytesToLong(this.left_seed) & 0xfffffffffc000000L; //most significant 38 bits are 1. 60% is 38.4
 
         //40% LSB of right_seed (eq. 4b)
-        right_seed_prime = ByteUtils.bytesToLong(right_seed) & 0x1ffffffL; //least significant 25 bits are 1. 40% is 25.6
+        this.right_seed_prime = ByteUtils.bytesToLong(this.right_seed) & 0x1ffffffL; //least significant 25 bits are 1. 40% is 25.6
 
         //compute/store actual_seed (eq. 5)
-        actual_seed = ByteUtils.bytesToLong(child_seed)
-                ^ (left_seed_prime | right_seed_prime)
-                ^ timestamp.getTimestamp(); //isn't the timestamp 32 bits?
+        this.actual_seed = ByteUtils.bytesToLong(this.child_seed)
+                ^ (this.left_seed_prime | this.right_seed_prime)
+                ^ this.timestamp.getTimestamp(); //isn't the timestamp 32 bits?
     }
 
     /**
      * TODO: THIS FUNCTION
      * Generates the encryption key from the actual seed
      */
-    private static void generateKey() {
+    private void generateKey() {
         SecureRandom random = new SecureRandom();
-        random.setSeed(actual_seed);
+        random.setSeed(this.actual_seed);
 
         //retrieve 4 lsbs from timestamp and used as state s
-        int state = Integer.parseInt(timestamp.getTimestampBits().substring(timestamp.getTimestampBits().length() - 4), 2);
+        int state = Integer.parseInt(this.timestamp.getTimestampBits().substring(this.timestamp.getTimestampBits().length() - 4), 2);
 
         //get the sth sequence generated by the PRNG to be used as the key
         byte[] temp_key = new byte[16];
@@ -116,15 +125,27 @@ public class HiveKey {
             random.nextBytes(temp_key);
             System.out.println(temp_key);
         }
-        key = temp_key;
+        this.key = temp_key;
     }
 
-    public static String bytesToHex(byte[] in) {
+    public String bytesToHex(byte[] in) {
         final StringBuilder builder = new StringBuilder();
         for(byte b : in) {
             builder.append(String.format("%02x", b));
         }
         return builder.toString();
+    }
+
+    public String run() {
+        this.generateParents();
+        byte[] p = this.disturb();
+        this.generateChild(p);
+        this.computeActualSeed();
+        this.generateKey();
+        String key_string = this.bytesToHex(this.key);
+
+        return key_string;
+
     }
 
     /**
@@ -134,23 +155,9 @@ public class HiveKey {
      * @param args command line arguments, if any
      */
     public static void main(String[] args) {
-        long ts = System.currentTimeMillis();
-        timestamp = new HKTimestamp(ts);
-        //timestampInfo();
-
-        //init parent_seeds array
-        parent_seeds = new ArrayList<byte[]>(6);
-        left_seed = new byte[8];
-        right_seed = new byte[8];
-
-        generateParents();
-        byte[] p = disturb();
-        generateChild(p);
-        computeActualSeed();
-        key = new byte[8];
-        generateKey();
-
-        System.out.println(bytesToHex(key));
+        HiveKey hk = new HiveKey();
+        String key_string = hk.run();
+        System.out.println(key_string);
         //generate 10240 key sequence - output to file
         //delay - random from 0-2 seconds, between each key sequence generated
         //sequence evaluation
