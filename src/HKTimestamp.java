@@ -68,10 +68,11 @@ public class HKTimestamp {
 
     @Override
     public String toString() {
-        System.out.println("Timestamp: " + timestamp.getTimestamp());
-        System.out.println("Timestamp bits: " + timestamp.getTimestampBits());
-        System.out.println("Version: " + timestamp.getVer());
-        System.out.println("Parent ID: " + timestamp.getParentIDBits());
-        System.out.println("Child ID: " + timestamp.getChildIDBits());
+        String timestamp_string = "Timestamp: " + this.timestamp
+                + "\nTimestamp bits: " + this.bits
+                + "\nVersion: " + this.ver
+                + "\nParent ID: " + this.parent_id_bits
+                + "\nChild ID: " + this.child_id_bits;
+        return timestamp_string;
     }
 }
