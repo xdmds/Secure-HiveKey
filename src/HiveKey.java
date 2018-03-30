@@ -2,6 +2,9 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.security.SecureRandom;
 import java.util.concurrent.TimeUnit;
+import java.io.BufferedWriter;
+import java.io.FileWriter;
+import java.io.IOException;
 
 public class HiveKey {
     private long actual_seed; //SecureRandom.generateSeed(64 bits)
@@ -92,7 +95,6 @@ public class HiveKey {
     }
 
     /**
-     * TODO: THIS FUNCTION
      * Generates the seed used for the actual key generation, done by disturbing the hive and integrating
      * the left and right neighbors
      */
@@ -110,7 +112,6 @@ public class HiveKey {
     }
 
     /**
-     * TODO: THIS FUNCTION
      * Generates the encryption key from the actual seed
      */
     private void generateKey() {
@@ -149,33 +150,35 @@ public class HiveKey {
     }
 
     /**
-     * FIXME: COMPLETE THIS FUNCTION
      * Creates a encryption key sequences with random delays. These keys are then evaluated
      * with ISS and STS and compared to the results of HiveSec's implementation using Random()
      *
      * @param args command line arguments, if any
      */
-    public static void main(String[] args) {
-        if( args.length != 1) {
-            System.out.println("Usage: java HiveKey <number of key sequences to generate>");
+    public static void main(String[] args) throws IOException {
+        if( args.length != 2) {
+            System.out.println("Usage: java HiveKey <number of key sequences> <output filename>");
             System.exit(0);
         }
+
+        //generate 10240 key sequence - output to file
+        BufferedWriter writer = new BufferedWriter(new FileWriter(args[1]));
         for (int i = 0; i < Integer.parseInt(args[0]); i++) {
             SecureRandom random = new SecureRandom();
             int delay = random.nextInt(3);
             HiveKey hk = new HiveKey();
             String key_string = hk.run();
-            System.out.println(key_string);
-
+            writer.write(key_string + "\n");
+            
             //delay - random from 0-2 seconds, between each key sequence generated
             try {
                 TimeUnit.SECONDS.sleep(delay);
             } catch (InterruptedException e) {
-                System.out.println("got interrupted!");
+                System.out.println("error: " + e);
             }
-            //generate 10240 key sequence - output to file
-
-            //sequence evaluation
         }
+
+        writer.close();
+        //sequence evaluation
     }
 }
