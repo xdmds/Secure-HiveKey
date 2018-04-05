@@ -163,14 +163,15 @@ public class HiveKey {
 
         //generate 10240 key sequence - output to file
         BufferedWriter writer = new BufferedWriter(new FileWriter(args[1]));
+        HiveKey hk = new HiveKey();
         for (int i = 0; i < Integer.parseInt(args[0]); i++) {
             SecureRandom random = new SecureRandom();
             int delay = random.nextInt(3);
-            HiveKey hk = new HiveKey();
             String key_string = hk.run();
             writer.write(key_string + "\n");
             
             //delay - random from 0-2 seconds, between each key sequence generated
+
             try {
                 TimeUnit.SECONDS.sleep(delay);
             } catch (InterruptedException e) {
